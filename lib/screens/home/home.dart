@@ -1,68 +1,100 @@
-import 'package:expense_tracker/screens/home/widgets/expenses.dart';
+import 'package:expense_tracker/bloc/app_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:expense_tracker/screens/home/widgets/new_expense.dart';
+import 'package:expense_tracker/screens/home/widgets/expenses_list/expenses_list.dart';
+import 'package:expense_tracker/models/expense.dart';
+import 'package:expense_tracker/screens/home/widgets/chart/chart.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-var kColorScheme = ColorScheme.fromSeed(
-  seedColor: const Color.fromARGB(255, 96, 59, 181),
-);
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
-var kDarkColorScheme = ColorScheme.fromSeed(
-  brightness: Brightness.dark,
-  seedColor: const Color.fromARGB(255, 5, 99, 125),
-);
+  @override
+  State<HomeScreen> createState() {
+    return _HomeScreenState();
+  }
+}
 
-class ExpenseApp extends StatelessWidget {
-  const ExpenseApp({super.key});
+class _HomeScreenState extends State<HomeScreen> {
+  void _openAddExpenseOverlay() {
+    showModalBottomSheet(
+      useSafeArea: true,
+      isScrollControlled: true,
+      context: context,
+      builder: (ctx) => const NewExpense(),
+    );
+  }
+
+  void _removeExpense(Expense expense) {
+    final expenseIndex =
+        context.read<AppBloc>().state.registeredExpenses.indexOf(expense);
+    context.read<AppBloc>().add(AppExpenseRemoved(expense: expense));
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 3),
+        content: const Text('Expense deleted.'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            context.read<AppBloc>().add(
+                AppExpenseRemovalUndoed(expense: expense, index: expenseIndex));
+          },
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      darkTheme: ThemeData.dark().copyWith(
-        useMaterial3: true,
-        colorScheme: kDarkColorScheme,
-        cardTheme: const CardTheme().copyWith(
-          color: kDarkColorScheme.secondaryContainer,
-          margin: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: kDarkColorScheme.primaryContainer,
-            foregroundColor: kDarkColorScheme.onPrimaryContainer,
-          ),
-        ),
-      ),
-      theme: ThemeData().copyWith(
-        useMaterial3: true,
-        colorScheme: kColorScheme,
-        appBarTheme: const AppBarTheme().copyWith(
-          backgroundColor: kColorScheme.onPrimaryContainer,
-          foregroundColor: kColorScheme.primaryContainer,
-        ),
-        cardTheme: const CardTheme().copyWith(
-          color: kColorScheme.secondaryContainer,
-          margin: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: kColorScheme.primaryContainer,
-          ),
-        ),
-        textTheme: ThemeData().textTheme.copyWith(
-              titleLarge: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: kColorScheme.onSecondaryContainer,
-                fontSize: 16,
+    final width = MediaQuery.of(context).size.width;
+
+    late Widget mainContent = const Center(
+      child: Text('No expenses found. Start adding some!'),
+    );
+
+    return BlocConsumer<AppBloc, AppState>(
+      listener: (context, state) {
+        mainContent = const Center(
+          child: Text('No expenses found. Start adding some!'),
+        );
+        if (state.registeredExpenses.isNotEmpty) {
+          mainContent = ExpensesList(
+            expenses: state.registeredExpenses,
+            onRemoveExpense: _removeExpense,
+          );
+        }
+      },
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Flutter ExpenseTracker'),
+            actions: [
+              IconButton(
+                onPressed: _openAddExpenseOverlay,
+                icon: const Icon(Icons.add),
               ),
-            ),
-      ),
-      // themeMode: ThemeMode.system, // default
-      home: const Expenses(),
+            ],
+          ),
+          body: width < 600
+              ? Column(
+                  children: [
+                    Chart(expenses: state.registeredExpenses),
+                    Expanded(
+                      child: mainContent,
+                    ),
+                  ],
+                )
+              : Row(children: [
+                  Expanded(
+                    child: Chart(expenses: state.registeredExpenses),
+                  ),
+                  Expanded(
+                    child: mainContent,
+                  ),
+                ]),
+        );
+      },
     );
   }
 }
