@@ -8,4 +8,8 @@ class AppState {
     return AppState(
         registeredExpenses: registeredExpenses ?? this.registeredExpenses);
   }
+
+  factory AppState.create() {
+    return AppState(registeredExpenses: []);
+  }
 }
