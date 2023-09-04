@@ -5,7 +5,7 @@ part 'app_event.dart';
 part 'app_state.dart';
 
 class AppBloc extends Bloc<AppEvent, AppState> {
-  AppBloc() : super(AppState.create()) {
+  AppBloc() : super(AppState.initial()) {
     on<AppExpenseRegistered>(_registerExpense);
     on<AppExpenseRemoved>(_removeExpense);
     on<AppExpenseRemovalUndoed>(_expenseRemovalUndoed);

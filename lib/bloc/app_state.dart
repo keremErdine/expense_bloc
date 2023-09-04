@@ -9,7 +9,7 @@ class AppState {
         registeredExpenses: registeredExpenses ?? this.registeredExpenses);
   }
 
-  factory AppState.create() {
+  factory AppState.initial() {
     return AppState(registeredExpenses: []);
   }
 }
