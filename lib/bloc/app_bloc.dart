@@ -1,5 +1,4 @@
-// ignore: depend_on_referenced_packages
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:expense_tracker/models/expense.dart';
 
 part 'app_event.dart';
@@ -7,27 +6,27 @@ part 'app_state.dart';
 
 class AppBloc extends Bloc<AppEvent, AppState> {
   AppBloc() : super(AppState.create()) {
-    on<AppExpenseRegistered>((event, emit) => emit(registerExpense(event)));
-    on<AppExpenseRemoved>((event, emit) => emit(removeExpense(event)));
-    on<AppExpenseRemovalUndoed>(
-        (event, emit) => emit(expenseRemovalUndoed(event)));
+    on<AppExpenseRegistered>(_registerExpense);
+    on<AppExpenseRemoved>(_removeExpense);
+    on<AppExpenseRemovalUndoed>(_expenseRemovalUndoed);
   }
 
-  AppState registerExpense(AppExpenseRegistered event) {
-    List<Expense> copiedList = state.registeredExpenses;
+  void _registerExpense(
+      AppExpenseRegistered event, Emitter<AppState> emit) async {
+    List<Expense> copiedList = [...state.registeredExpenses];
     copiedList.add(event.expense);
-    return state.copyWith(registeredExpenses: copiedList);
+    emit(state.copyWith(registeredExpenses: copiedList));
   }
 
-  AppState removeExpense(AppExpenseRemoved event) {
-    List<Expense> copiedList = state.registeredExpenses;
+  void _removeExpense(AppExpenseRemoved event, Emitter emit) async {
+    List<Expense> copiedList = [...state.registeredExpenses];
     copiedList.remove(event.expense);
-    return state.copyWith(registeredExpenses: copiedList);
+    emit(state.copyWith(registeredExpenses: copiedList));
   }
 
-  AppState expenseRemovalUndoed(AppExpenseRemovalUndoed event) {
-    List<Expense> copiedList = state.registeredExpenses;
+  void _expenseRemovalUndoed(AppExpenseRemovalUndoed event, Emitter emit) {
+    List<Expense> copiedList = [...state.registeredExpenses];
     copiedList.insert(event.index, event.expense);
-    return state.copyWith(registeredExpenses: copiedList);
+    emit(state.copyWith(registeredExpenses: copiedList));
   }
 }
